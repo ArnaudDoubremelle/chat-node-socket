@@ -1,6 +1,7 @@
 require('colors')
 
-const app = require('express')()
+const express = require('express')
+const app = express()
 const http = require('http').Server(app)
 const io = require('socket.io')(http)
 const requestIp = require('request-ip')
@@ -11,8 +12,7 @@ function consoleLog(event, method, msg = undefined) {
     console.log(event.red + '.' + method.yellow + (msg !== undefined ? (' => ' + msg) : ''))
 }
 
-//app.get('/', function (req, res) { res.sendFile(__dirname + '/index.html') })
-
+app.use('/static', express.static('public'));
 app.get('/', function (req, res) { res.sendFile(__dirname + '/index.html') })
 
 io.on('connection', function(socket){

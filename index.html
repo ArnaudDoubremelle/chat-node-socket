@@ -2,36 +2,55 @@
 <html>
 <head>
     <title>Socket.IO chat</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font: 13px Helvetica, Arial; }
-        form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-        form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-        form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-        #messages { list-style-type: none; margin: 0; padding: 0; }
-        #messages li { padding: 5px 10px; }
-        #messages li:nth-child(odd) { background: #eee; }
-    </style>
+    <link href='https://fonts.googleapis.com/css?family=Nunito:400,300,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 
-    <h2>Channels</h2>
-    <div class="channel-list">
+<div class='container'>
+    <h1>Messenger App</h1>
+    <div class="chatbox__channel-list channel-list">
+        <h1>Channel</h1>
         <div id="chat-1" class="chat-channel">Chat 1</div>
         <div id="chat-2" class="chat-channel">Chat 2</div>
         <div id="chat-3" class="chat-channel">Chat 3</div>
     </div>
-    <hr>
+    <div class="chatbox">
+        <div id="users" class="chatbox__user-list">
+            <h1>Online</h1>
+        </div>
+        <div class="chatbox__messages">
+            <div id="messages" class="chatbox__messages__user-message">
 
-    <!-- Show if user is connected/disconnected from socket -->
-    <h2>Users</h2>
-    <ul id="users"></ul>
-    <hr>
-    <h2>Messages</h2>
-    <ul id="messages"></ul>
-    <form action="">
-        <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
+            </div>
+        </div>
+        <form>
+            <input id="m" type="text" placeholder="Type Message">
+        </form>
+    </div>
+
+
+
+
+
+    <!--<h2>Channels</h2>-->
+    <!--<div class="channel-list">-->
+        <!--<div id="chat-1" class="chat-channel">Chat 1</div>-->
+        <!--<div id="chat-2" class="chat-channel">Chat 2</div>-->
+        <!--<div id="chat-3" class="chat-channel">Chat 3</div>-->
+    <!--</div>-->
+    <!--<hr>-->
+
+    <!--&lt;!&ndash; Show if user is connected/disconnected from socket &ndash;&gt;-->
+    <!--<h2>Users</h2>-->
+    <!--<ul id="users"></ul>-->
+    <!--<hr>-->
+    <!--<h2>Messages</h2>-->
+    <!--<ul id="messages"></ul>-->
+    <!--<form action="">-->
+        <!--<input id="m" autocomplete="off" /><button>Send</button>-->
+    <!--</form>-->
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script>
@@ -65,7 +84,8 @@
 
             socket.on('chat.join', (data) => {
                 var json = JSON.parse(data)
-                $users.append(`<li data-username="${json.username}">${json.username}</li>`);
+                console.log(json.username)
+                $users.append(`<div class="chatbox__user--active" data-username="${json.username}"><p>${json.username}</p></div>`);
             })
 
 
@@ -79,15 +99,15 @@
                 var json = JSON.parse(data)
                 console.log(`chat.message: ${json.message}`)
                 if (username == json.username) {
-                    $messages.append(`<li style="background-color: rgba(0,128,0,0.51)">moi : ${json.message}</li>`);
+                    $messages.append(`<div class="chatbox__messages__user-message--ind-message"><p class="name">moi</p><br/><p class="message">${json.message}</p></div>`);
                 } else {
-                    $messages.append(`<li>${json.username} : ${json.message}</li>`);
+                    $messages.append(`<div style="float: right" class="chatbox__messages__user-message--ind-message"><p class="name">${json.username}</p><br/><p class="message">${json.message}</p></div>`);
                 }
             })
 
             socket.on('chat.disconnect', (json) => {
                 const data = JSON.parse(json);
-                $users.find(`li[data-username="${data.username}"]`).remove();
+                $users.find(`.chatbox__user--active[data-username="${data.username}"]`).remove();
             });
 
         })(jQuery)
