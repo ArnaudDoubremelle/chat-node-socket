@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+    <title>Socket.IO chat</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font: 13px Helvetica, Arial; }
+        form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+        form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+        form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+        #messages { list-style-type: none; margin: 0; padding: 0; }
+        #messages li { padding: 5px 10px; }
+        #messages li:nth-child(odd) { background: #eee; }
+    </style>
+</head>
+<body>
+
+<div class="channel-list">
+    <div id="chat-1" class="chat-channel">Chat 1</div>
+    <div id="chat-2" class="chat-channel">Chat 2</div>
+    <div id="chat-3" class="chat-channel">Chat 3</div>
+</div>
+
+    <!-- Show if user is connected/disconnected from socket -->
+    <ul id="users"></ul>
+    <ul id="messages"></ul>
+    <form action="">
+        <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+        (function ($) {
+            var socket = io()
+            var $users = $('#users')
+            var $inputMessage = $("#m")
+            var $messages = $("#messages")
+            var username
+
+            if (typeof(Storage) !== undefined) {
+                username = localStorage.getItem('username');
+                console.log(`Username from localStorage is ${username}`)
+            }
+
+            while (username === undefined || username === null || username.trim() === '') {
+                username = prompt("Your username:")
+
+                if (typeof(Storage) !== undefined) {
+                    localStorage.setItem('username', username)
+                }
+            }
+
+            $('.chat-channel').click(function () {
+                $messages.empty()
+                $users.empty()
+                var channel = $(this).attr('id')
+                socket.emit('chat.join', JSON.stringify({'username': username, 'channel': channel}))
+            })
+
+
+            socket.on('chat.join', (data) => {
+                var json = JSON.parse(data)
+                $users.append(`<li data-username="${json.username}">${json.username}</li>`);
+            })
+
+
+            $('form').submit(() => {
+                socket.emit('chat.message', JSON.stringify({'username': username, 'message': $inputMessage.val()}));
+                $inputMessage.val('');
+                return false;
+            });
+
+            socket.on('chat.message', (data) => {
+                var json = JSON.parse(data)
+                console.log(`chat.message: ${json.message}`)
+                if (username == json.username) {
+                    $messages.append(`<li style="background-color: rgba(0,128,0,0.51)">moi : ${json.message}</li>`);
+                } else {
+                    $messages.append(`<li>${json.username} : ${json.message}</li>`);
+                }
+            })
+
+            socket.on('chat.disconnect', (json) => {
+                const data = JSON.parse(json);
+                $users.find(`li[data-username="${data.username}"]`).remove();
+            });
+
+        })(jQuery)
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "node-tests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "colors": "^1.1.2",
+    "express": "^4.16.2",
+    "redis": "^2.8.0",
+    "request-ip": "^2.0.2",
+    "socket.io": "^2.0.4",
+    "yarn": "^1.5.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.17.1"
+  }
+}
