@@ -46,7 +46,7 @@ io.on(s.CONNECT, function (socket) {
 
         consoleLog('chat', 'join', `${socket.username} has IP ${requestIp.getClientIp(socket.userIp)}`);
 
-        client.lpush(`rooms:${socket.room}:users`, JSON.stringify({'username': socket.username, 'status': socket.status}));
+        client.hmset(`rooms:${socket.room}:users:${socket.username}`, ['username', socket.username, 'status', socket.status]);
 
         // 2. Broadcast username
         socket.to(socket.room).emit(s.CHAT_JOIN, {'username': socket.username});
@@ -59,8 +59,13 @@ io.on(s.CONNECT, function (socket) {
     socket.on(s.ROOMS_JOIN, room => {
         socket.leave(socket.room, () => {
             consoleLog('rooms','join', `User ${socket.username} leave room "${socket.room}" and is joining room "${room}"`);
+
+            client.del(`rooms:${socket.room}:users:${socket.username}`);
+
             socket.join(room);
             socket.room = room;
+
+            client.hmset(`rooms:${socket.room}:users:${socket.username}`, ['username', socket.username, 'status', socket.status]);
 
             console.log(socket.room);
 
@@ -83,7 +88,8 @@ io.on(s.CONNECT, function (socket) {
 
         if (socket.username !== undefined) {
             socket.broadcast.emit(s.CHAT_DISCONNECT, {username: socket.username});
-            client.hdel('users', socket.user);
+            client.del(`rooms:${socket.room}:users:${socket.username}`);
+            client.del(`users:${socket.username}`);
         }
     })
 });
