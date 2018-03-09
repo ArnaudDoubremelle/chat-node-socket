@@ -62,11 +62,16 @@
             }
         });
 
+        socket.on('rooms.getUsers', (user) => {
+            if (user.username !== username) {
+                cache.users.append(`<div data-user="${user.username}" class="chat-room">${user.username} / ${user.status}</div>`)
+            }
+        });
+
         socket.on('rooms.getMessages', messages => {
             if (!Array.isArray(messages)) messages = [messages];
 
             for (let message of messages) {
-                console.log(message);
                 cache.messages.append(`
                     <div class="${message.username === username ? 'float-right' : ''}">
                         <p class="name">
@@ -84,15 +89,13 @@
             $users.find(`.chatbox__user--active[data-username="${data.username}"]`).remove();
         });
 
-
         cache.document.on('click', '#rooms > .chat-room', (e) => {
             e.preventDefault();
-
-            socket.emit('rooms.join', $(e.target).data('room'));
 
             cache.messages.empty();
             cache.users.empty();
 
+            socket.emit('rooms.join', $(e.target).data('room'));
         });
 
         cache.document.on('submit', '#formMessage', e => {

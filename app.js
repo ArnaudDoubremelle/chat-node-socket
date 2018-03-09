@@ -19,6 +19,7 @@ const s = {
     CHAT_DISCONNECT: "chat.disconnect",
     ROOMS_GETLIST: "rooms.getList",
     ROOMS_JOIN: "rooms.join",
+    ROOMS_GETUSERS: "rooms.getUsers",
     ROOMS_NEWUSER: "rooms.newUser",
     ROOMS_GETMESSAGES: "rooms.getMessages",
     ROOMS_POSTMESSAGE: "rooms.postMessage",
@@ -38,13 +39,10 @@ io.on(s.CONNECT, function (socket) {
         socket.userIp = requestIp.getClientIp(socket.request);
         socket.room = "General";
         socket.status = "active";
+
         socket.join(socket.room);
 
-        client.hmset(`users:${socket.username}`, ['username', socket.username, 'ip', socket.userIp], (err, res) => {
-            consoleLog('redis', 'lpush', `${socket.username} with IP ${socket.userIp} added to users list`);
-        });
-
-        consoleLog('chat', 'join', `${socket.username} has IP ${requestIp.getClientIp(socket.userIp)}`);
+        client.hmset(`users:${socket.username}`, ['username', socket.username, 'ip', socket.userIp]);
 
         client.hmset(`rooms:${socket.room}:users:${socket.username}`, ['username', socket.username, 'status', socket.status]);
 
@@ -54,31 +52,45 @@ io.on(s.CONNECT, function (socket) {
         client.smembers("rooms", (err, res) => {
             socket.emit(s.ROOMS_GETLIST, res)
         });
+
+        client.lrange(`rooms:${socket.room}:messages`, 0, 20, (err, res) => {
+            socket.emit(s.ROOMS_GETMESSAGES, res.reverse().map(json => JSON.parse(json)));
+        });
     });
 
     socket.on(s.ROOMS_JOIN, room => {
         socket.leave(socket.room, () => {
-            consoleLog('rooms','join', `User ${socket.username} leave room "${socket.room}" and is joining room "${room}"`);
+            consoleLog('rooms', 'join', `User ${socket.username} leave room "${socket.room}" and is joining room "${room}"`);
 
             client.del(`rooms:${socket.room}:users:${socket.username}`);
 
-            socket.join(room);
-            socket.room = room;
+            socket.join(room, () => {
+                socket.room = room;
 
-            client.hmset(`rooms:${socket.room}:users:${socket.username}`, ['username', socket.username, 'status', socket.status]);
+                client.hmset(`rooms:${socket.room}:users:${socket.username}`, ['username', socket.username, 'status', socket.status]);
 
-            console.log(socket.room);
+                socket.to(socket.room).emit(s.ROOMS_NEWUSER, socket.username);
 
-            socket.to(socket.room).emit(s.ROOM_NEWUSER, socket.username);
+                client.lrange(`rooms:${socket.room}:messages`, 0, 20, (err, res) => {
+                    socket.emit(s.ROOMS_GETMESSAGES, res.reverse().map(json => JSON.parse(json)));
+                });
 
-            client.lrange(`rooms:${socket.room}:messages`, 0, 20, (err, res) => {
-                socket.emit(s.ROOMS_GETMESSAGES, res.map(json => JSON.parse(json)));
+                client.keys(`rooms:${socket.room}:users:*`, (err, userKeys) => {
+                    for (let userKey of userKeys) {
+                        client.hgetall(userKey, (err, user) => {
+                            socket.emit(s.ROOMS_GETUSERS, user);
+                        })
+                    }
+                });
             });
         });
     });
 
     socket.on(s.ROOMS_POSTMESSAGE, (message) => {
-        client.lpush(`rooms:${socket.room}:messages`, JSON.stringify({'username': socket.username, 'message': message}));
+        client.lpush(`rooms:${socket.room}:messages`, JSON.stringify({
+            'username': socket.username,
+            'message': message
+        }));
 
         io.in(socket.room).emit(s.ROOMS_GETMESSAGES, {'username': socket.username, 'message': message});
     });
