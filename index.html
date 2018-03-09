@@ -64,7 +64,13 @@
 
         socket.on('rooms.getUsers', (user) => {
             if (user.username !== username) {
-                cache.users.append(`<div data-user="${user.username}" class="chat-room">${user.username} / ${user.status}</div>`)
+                cache.users.append(`<div data-username="${user.username}" class="user">${user.username} / ${user.status}</div>`)
+            }
+        });
+
+        socket.on('rooms.newUser', (user) => {
+            if (user.username !== username) {
+                cache.users.append(`<div data-username="${user.username}" class="user">${user.username} / ${user.status}</div>`)
             }
         });
 
@@ -84,9 +90,8 @@
             }
         });
 
-        socket.on('chat.disconnect', (json) => {
-            const data = JSON.parse(json);
-            $users.find(`.chatbox__user--active[data-username="${data.username}"]`).remove();
+        socket.on('rooms.leave', (username) => {
+            $(`div[data-username="${username}"]`).remove();
         });
 
         cache.document.on('click', '#rooms > .chat-room', (e) => {
