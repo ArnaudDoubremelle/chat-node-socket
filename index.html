@@ -10,107 +10,99 @@
 
 <div class='container'>
     <h1>Messenger App</h1>
-    <div class="chatbox__channel-list channel-list">
-        <h1>Channel</h1>
-        <div id="chat-1" class="chat-channel">Chat 1</div>
-        <div id="chat-2" class="chat-channel">Chat 2</div>
-        <div id="chat-3" class="chat-channel">Chat 3</div>
+    <div id="rooms" class="chatbox__rooms-list rooms-list">
+        <h1>Rooms</h1>
     </div>
     <div class="chatbox">
         <div id="users" class="chatbox__user-list">
             <h1>Online</h1>
         </div>
         <div class="chatbox__messages">
-            <div id="messages" class="chatbox__messages__user-message">
-
-            </div>
+            <div id="messages" class="chatbox__messages__user-message"></div>
         </div>
-        <form>
+        <form id="formMessage">
             <input id="m" type="text" placeholder="Type Message">
         </form>
     </div>
+</div>
 
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+    (function ($) {
+        const cache = {
+            document: $(document),
+            rooms: $('#rooms'),
+            users: $('#users'),
+            inputMessage: $("#m"),
+            messages: $("#messages")
+        };
 
+        const socket = io();
+        var username;
 
+        if (typeof(Storage) !== undefined) {
+            username = localStorage.getItem('username');
+            console.log(`Username from localStorage is ${username}`)
+        }
 
-
-    <!--<h2>Channels</h2>-->
-    <!--<div class="channel-list">-->
-        <!--<div id="chat-1" class="chat-channel">Chat 1</div>-->
-        <!--<div id="chat-2" class="chat-channel">Chat 2</div>-->
-        <!--<div id="chat-3" class="chat-channel">Chat 3</div>-->
-    <!--</div>-->
-    <!--<hr>-->
-
-    <!--&lt;!&ndash; Show if user is connected/disconnected from socket &ndash;&gt;-->
-    <!--<h2>Users</h2>-->
-    <!--<ul id="users"></ul>-->
-    <!--<hr>-->
-    <!--<h2>Messages</h2>-->
-    <!--<ul id="messages"></ul>-->
-    <!--<form action="">-->
-        <!--<input id="m" autocomplete="off" /><button>Send</button>-->
-    <!--</form>-->
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script>
-        (function ($) {
-            var socket = io()
-            var $users = $('#users')
-            var $inputMessage = $("#m")
-            var $messages = $("#messages")
-            var username
+        while (username === undefined || username === null || username.trim() === '') {
+            username = prompt("Your username:");
 
             if (typeof(Storage) !== undefined) {
-                username = localStorage.getItem('username');
-                console.log(`Username from localStorage is ${username}`)
+                localStorage.setItem('username', username)
             }
+        }
 
-            while (username === undefined || username === null || username.trim() === '') {
-                username = prompt("Your username:")
+        socket.emit('chat.join', username);
 
-                if (typeof(Storage) !== undefined) {
-                    localStorage.setItem('username', username)
-                }
+        socket.on('rooms.getList', (rooms) => {
+            for (let room of rooms) {
+                cache.rooms.append(`<div data-room="${room}" class="chat-room">${room}</div>`)
             }
+        });
 
-            $('.chat-channel').click(function () {
-                $messages.empty()
-                $users.empty()
-                var channel = $(this).attr('id')
-                socket.emit('chat.join', JSON.stringify({'username': username, 'channel': channel}))
-            })
+        socket.on('rooms.getMessages', messages => {
+            if (!Array.isArray(messages)) messages = [messages];
+
+            for (let message of messages) {
+                console.log(message);
+                cache.messages.append(`
+                    <div class="${message.username === username ? 'float-right' : ''}">
+                        <p class="name">
+                            ${message.username === username ? 'Me, Myself and I' : message.username}
+                        </p>
+                        <br/>
+                        <p class="message">${message.message}</p>
+                    </div>
+                `);
+            }
+        });
+
+        socket.on('chat.disconnect', (json) => {
+            const data = JSON.parse(json);
+            $users.find(`.chatbox__user--active[data-username="${data.username}"]`).remove();
+        });
 
 
-            socket.on('chat.join', (data) => {
-                var json = JSON.parse(data)
-                console.log(json.username)
-                $users.append(`<div class="chatbox__user--active" data-username="${json.username}"><p>${json.username}</p></div>`);
-            })
+        cache.document.on('click', '#rooms > .chat-room', (e) => {
+            e.preventDefault();
 
+            socket.emit('rooms.join', $(e.target).data('room'));
 
-            $('form').submit(() => {
-                socket.emit('chat.message', JSON.stringify({'username': username, 'message': $inputMessage.val()}));
-                $inputMessage.val('');
-                return false;
-            });
+            cache.messages.empty();
+            cache.users.empty();
 
-            socket.on('chat.message', (data) => {
-                var json = JSON.parse(data)
-                console.log(`chat.message: ${json.message}`)
-                if (username == json.username) {
-                    $messages.append(`<div class="chatbox__messages__user-message--ind-message"><p class="name">moi</p><br/><p class="message">${json.message}</p></div>`);
-                } else {
-                    $messages.append(`<div style="float: right" class="chatbox__messages__user-message--ind-message"><p class="name">${json.username}</p><br/><p class="message">${json.message}</p></div>`);
-                }
-            })
+        });
 
-            socket.on('chat.disconnect', (json) => {
-                const data = JSON.parse(json);
-                $users.find(`.chatbox__user--active[data-username="${data.username}"]`).remove();
-            });
+        cache.document.on('submit', '#formMessage', e => {
+            e.preventDefault();
 
-        })(jQuery)
-    </script>
+            socket.emit('rooms.postMessage', cache.inputMessage.val());
+            cache.inputMessage.val('');
+        });
+
+    })(jQuery);
+</script>
 </body>
 </html>
