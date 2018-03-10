@@ -192,7 +192,6 @@
 
         cache.document.on('submit', '#sendmessage', e => {
             e.preventDefault();
-            console.log(cache.inputMessage.val())
 
             socket.emit('rooms.postMessage', cache.inputMessage.val());
             cache.inputMessage.val('');

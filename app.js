@@ -97,6 +97,8 @@ io.on(s.CONNECT, function (socket) {
             socket.to(socket.room).emit(s.ROOMS_LEAVE, socket.username);
 
             client.del(`rooms:${socket.room}:users:${socket.username}`);
+
+            socket.room = "";
         });
     });
 
