@@ -16,6 +16,7 @@ const s = {
     CONNECT: "connection",
     DISCONNECT: "disconnect",
     CHAT_JOIN: "chat.join",
+    USER_STATUS: "user.status",
     ROOMS_LEAVE: "rooms.leave",
     ROOMS_GETLIST: "rooms.getList",
     ROOMS_JOIN: "rooms.join",
@@ -100,6 +101,10 @@ io.on(s.CONNECT, function (socket) {
 
             socket.room = "";
         });
+    });
+
+    socket.on(s.USER_STATUS, status => {
+        socket.to(socket.room).emit(s.USER_STATUS, {'username': socket.username, 'status': status});
     });
 
     socket.on(s.DISCONNECT, () => {
