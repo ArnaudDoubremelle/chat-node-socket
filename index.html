@@ -76,57 +76,58 @@
             messages: $('#chat-messages'),
             inputMessage: $('#sendmessage input'),
             isTyping: $('#is-typing')
-        };
+        }
 
-        const socket = io();
-        var username;
+        const socket = io()
+        var username
+        var usersTyping = []
 
-        cache.inputMessage.focus(function(){
-            if($(this).val() == "Send message..."){
-                $(this).val("");
+        cache.inputMessage.focus(function () {
+            if ($(this).val() == 'Send message...') {
+                $(this).val('')
             }
-        });
-        cache.inputMessage.focusout(function(){
-            if($(this).val() == ""){
-                $(this).val("Send message...");
+        })
+        cache.inputMessage.focusout(function () {
+            if ($(this).val() == '') {
+                $(this).val('Send message...')
             }
-        });
+        })
 
         if (typeof(Storage) !== undefined) {
-            username = localStorage.getItem('username');
+            username = localStorage.getItem('username')
             console.log(`Username from localStorage is ${username}`)
         }
 
         while (username === undefined || username === null || username.trim() === '') {
-            username = prompt('Your username:');
+            username = prompt('Your username:')
 
             if (typeof(Storage) !== undefined) {
                 localStorage.setItem('username', username)
             }
         }
 
-        socket.emit('chat.join', username);
+        socket.emit('chat.join', username)
 
         socket.on('rooms.getList', (rooms) => {
             for (let room of rooms) {
-                cache.rooms.append(`<div class="room" data-room="${room}">${room}</div>`);
+                cache.rooms.append(`<div class="room" data-room="${room}">${room}</div>`)
             }
-        });
+        })
 
         socket.on('rooms.getUsers', (user) => {
             if (user.username !== username) {
-                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`);
+                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`)
             }
-        });
+        })
 
         socket.on('rooms.newUser', (user) => {
             if (user.username !== username) {
-                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`);
+                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`)
             }
-        });
+        })
 
         socket.on('rooms.getMessages', messages => {
-            if (!Array.isArray(messages)) messages = [messages];
+            if (!Array.isArray(messages)) messages = [messages]
 
             for (let message of messages) {
                 cache.messages.append(`
@@ -137,92 +138,122 @@
                             <div class="corner"></div>
                         </div>
                     </div>
-                `);
+                `)
             }
 
-            var divScrollBottom = document.getElementById("chat-messages");
-            divScrollBottom.scrollTop = divScrollBottom.scrollHeight;
-        });
+            var divScrollBottom = document.getElementById('chat-messages')
+            divScrollBottom.scrollTop = divScrollBottom.scrollHeight
+        })
 
         socket.on('rooms.isTyping', user => {
-           if (user.isTyping === true) {
-               cache.isTyping.text(user.username + ' is typing...')
-           } else {
-               cache.isTyping.text('')
-           }
-        });
+            var typingValue = cache.isTyping.text()
+            var arrayContainsUser = (usersTyping.indexOf(user.username) > -1)
+            if (user.isTyping === true) {
+                if (arrayContainsUser !== true) {
+                    usersTyping.push(user.username)
+                }
+                if (usersTyping.length > 1) {
+                    cache.isTyping.text(usersTyping.join(', ') + ' are typing...')
+                } else {
+                    cache.isTyping.text(user.username + ' is typing...')
+                }
+            } else {
+                for (var i = usersTyping.length - 1; i >= 0; i--) {
+                    if (usersTyping[i] === user.username) {
+                        usersTyping.splice(i, 1)
+                    }
+                }
+                console.log(usersTyping)
+                if (usersTyping.length === 0) {
+                    cache.isTyping.text('');
+                } else if (usersTyping.length > 1) {
+                    cache.isTyping.text(usersTyping.toString() + ' are typing...' );
+                } else {
+                    cache.isTyping.text(user.username + ' is typing...')
+                }
+            }
+        })
 
         socket.on('rooms.leave', username => {
-            $(`span[data-username="${username}"]`).remove();
-        });
+            $(`span[data-username="${username}"]`).remove()
+        })
 
         cache.document.on('click', '#rooms > .room', (e) => {
-            e.preventDefault();
+            e.preventDefault()
 
-            cache.messages.empty();
-            cache.users.empty();
+            cache.messages.empty()
+            cache.users.empty()
 
-            socket.emit('rooms.join', $(e.target).data('room'));
+            socket.emit('rooms.join', $(e.target).data('room'))
 
-            setTimeout(function(){$("#profile p").addClass("animate");$("#profile").addClass("animate");}, 100);
-            setTimeout(function(){
-                $("#chat-messages").addClass("animate");
-                $('.ux, .uy').addClass('u1');
-                setTimeout(function(){$('.ux, .uy').addClass('u2');}, 100);
-                setTimeout(function(){$('.ux, .uy').addClass('u3');}, 200);
-            }, 150);
+            setTimeout(function () {
+                $('#profile p').addClass('animate')
+                $('#profile').addClass('animate')
+            }, 100)
+            setTimeout(function () {
+                $('#chat-messages').addClass('animate')
+                $('.ux, .uy').addClass('u1')
+                setTimeout(function () {
+                    $('.ux, .uy').addClass('u2')
+                }, 100)
+                setTimeout(function () {
+                    $('.ux, .uy').addClass('u3')
+                }, 200)
+            }, 150)
 
-            var name = $(e.target).data('room');
-            $("#profile p").html(name);
+            var name = $(e.target).data('room')
+            $('#profile p').html(name)
 
-            $('#friendslist').fadeOut();
+            $('#friendslist').fadeOut()
             $('#chatview').fadeIn(function () {
-                var divScrollBottom = document.getElementById("chat-messages");
-                divScrollBottom.scrollTop = divScrollBottom.scrollHeight;
-            });
+                var divScrollBottom = document.getElementById('chat-messages')
+                divScrollBottom.scrollTop = divScrollBottom.scrollHeight
+            })
 
-        });
+        })
 
         cache.document.on('click', '#close', (e) => {
-            e.preventDefault();
-            socket.emit('rooms.leave');
+            e.preventDefault()
+            cache.inputMessage.val('')
+            socket.emit('rooms.isTyping', {'username': username, 'isTyping': false})
+            socket.emit('rooms.leave')
 
-            $("#chat-messages, #profile, #profile p").removeClass("animate");
-            $('.cx, .cy').removeClass("s1 s2 s3");
+            $('#chat-messages, #profile, #profile p').removeClass('animate')
+            $('.cx, .cy').removeClass('s1 s2 s3')
 
             setTimeout(() => {
-                $('#chatview').fadeOut();
-                $('#friendslist').fadeIn();
-            }, 50);
-        });
+                $('#chatview').fadeOut()
+                $('#friendslist').fadeIn()
+            }, 50)
+        })
 
         cache.document.on('click', '#status', (e) => {
-            e.preventDefault();
+            e.preventDefault()
             if ($(e.target).data('status') === 'active') {
-                $(e.target).addClass('inactive');
-                $(e.target).data('status', 'inactive');
+                $(e.target).addClass('inactive')
+                $(e.target).data('status', 'inactive')
             } else {
-                $(e.target).removeClass('inactive');
-                $(e.target).data('status', 'active');
+                $(e.target).removeClass('inactive')
+                $(e.target).data('status', 'active')
             }
-        });
+        })
 
         cache.document.on('submit', '#sendmessage', e => {
-            e.preventDefault();
+            e.preventDefault()
 
-            socket.emit('rooms.postMessage', cache.inputMessage.val());
-            cache.inputMessage.val('');
-        });
+            socket.emit('rooms.postMessage', cache.inputMessage.val())
+            cache.inputMessage.val('')
+        })
 
         cache.inputMessage.keyup(() => {
-            let isTyping = true;
+            let isTyping = true
 
-            if (cache.inputMessage.val() === "") {
-                isTyping = false;
+            if (cache.inputMessage.val() === '') {
+                isTyping = false
             }
 
-            socket.emit('rooms.isTyping', {'username': username, 'isTyping': isTyping});
-        });
+            socket.emit('rooms.isTyping', {'username': username, 'isTyping': isTyping})
+        })
 
     })(jQuery)
 </script>
