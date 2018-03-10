@@ -29,6 +29,9 @@ app.use('/static', express.static('public'));
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html')
 });
+app.get('/old', function (req, res) {
+    res.sendFile(__dirname + '/index.old.html')
+});
 
 io.on(s.CONNECT, function (socket) {
     consoleLog('socket', 'connection', 'another user connected');
@@ -95,6 +98,7 @@ io.on(s.CONNECT, function (socket) {
     });
 
     socket.on(s.DISCONNECT, function () {
+        console.log(socket.username)
         console.log('user disconnected');
 
         if (socket.username !== undefined) {

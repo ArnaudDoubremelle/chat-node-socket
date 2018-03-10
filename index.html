@@ -2,75 +2,123 @@
 <html>
 <head>
     <title>Socket.IO chat</title>
-    <link href='https://fonts.googleapis.com/css?family=Nunito:400,300,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700' rel='stylesheet' type='text/css'>
+    <!-- <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">-->
     <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/cube.css">
 </head>
 <body>
 
-<div class='container'>
-    <h1>Messenger App</h1>
-    <div id="rooms" class="chatbox__rooms-list rooms-list">
-        <h1>Rooms</h1>
+
+<div id="chatbox">
+    <div id="friendslist">
+
+        <div id="header"></div>
+
+        <div id="topmenu">
+            <span class="chats"></span> <span class="title">Online</span>
+        </div>
+
+        <div id="rooms"></div>
+
+        <div id="cube-pos">
+            <div class="cube">
+                <div class="half1">
+                    <div class="side s1"></div>
+                    <div class="side s2"></div>
+                    <div class="side s5"></div>
+                </div>
+                <div class="half2">
+                    <div class="side s3"></div>
+                    <div class="side s4"></div>
+                    <div class="side s6"></div>
+                </div>
+            </div>
+        </div>
+
     </div>
-    <div class="chatbox">
-        <div id="users" class="chatbox__user-list">
-            <h1>Online</h1>
+
+    <div id="chatview" class="p1">
+        <div id="profile">
+
+            <div id="close">
+                <div class="uy"></div>
+                <div class="ux"></div>
+            </div>
+
+            <p></p>
         </div>
-        <div class="chatbox__messages">
-            <div id="messages" class="chatbox__messages__user-message"></div>
+        <div id="users"></div>
+        <div id="chat-messages">
         </div>
-        <form id="formMessage">
-            <input id="m" type="text" placeholder="Type Message">
+
+        <form id="sendmessage">
+            <input type="text" value="Send message..."/>
+            <button type="submit" id="send"></button>
         </form>
+
     </div>
 </div>
 
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
 <script>
     (function ($) {
+
         const cache = {
             document: $(document),
             rooms: $('#rooms'),
             users: $('#users'),
-            inputMessage: $("#m"),
-            messages: $("#messages")
-        };
+            messages: $('#chat-messages'),
+            inputMessage: $('#sendmessage input')
+        }
 
         const socket = io();
         var username;
 
+        cache.inputMessage.focus(function(){
+            if($(this).val() == "Send message..."){
+                $(this).val("");
+            }
+        });
+        cache.inputMessage.focusout(function(){
+            if($(this).val() == ""){
+                $(this).val("Send message...");
+            }
+        });
+
         if (typeof(Storage) !== undefined) {
-            username = localStorage.getItem('username');
+            username = localStorage.getItem('username')
             console.log(`Username from localStorage is ${username}`)
         }
 
         while (username === undefined || username === null || username.trim() === '') {
-            username = prompt("Your username:");
+            username = prompt('Your username:')
 
             if (typeof(Storage) !== undefined) {
                 localStorage.setItem('username', username)
             }
         }
 
-        socket.emit('chat.join', username);
+        socket.emit('chat.join', username)
 
         socket.on('rooms.getList', (rooms) => {
             for (let room of rooms) {
-                cache.rooms.append(`<div data-room="${room}" class="chat-room">${room}</div>`)
+                cache.rooms.append(`<div class="room" data-room="${room}">${room}</div>`)
             }
         });
 
         socket.on('rooms.getUsers', (user) => {
             if (user.username !== username) {
-                cache.users.append(`<div data-username="${user.username}" class="user">${user.username} / ${user.status}</div>`)
+                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`)
             }
         });
 
         socket.on('rooms.newUser', (user) => {
             if (user.username !== username) {
-                cache.users.append(`<div data-username="${user.username}" class="user">${user.username} / ${user.status}</div>`)
+                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`)
             }
         });
 
@@ -79,38 +127,70 @@
 
             for (let message of messages) {
                 cache.messages.append(`
-                    <div class="${message.username === username ? 'float-right' : ''}">
-                        <p class="name">
-                            ${message.username === username ? 'Me, Myself and I' : message.username}
-                        </p>
-                        <br/>
-                        <p class="message">${message.message}</p>
+                    <div class="message ${message.username === username ? 'right' : ''}">
+                        <div class="bubble">
+                            ${message.username === username ? 'Me, Myself and I' : message.username} : ${message.message}
+                            <div class="corner"></div>
+                        </div>
                     </div>
                 `);
             }
+
+            var divScrollBottom = document.getElementById("chat-messages");
+            divScrollBottom.scrollTop = divScrollBottom.scrollHeight;
         });
 
         socket.on('rooms.leave', (username) => {
             $(`div[data-username="${username}"]`).remove();
         });
 
-        cache.document.on('click', '#rooms > .chat-room', (e) => {
+        cache.document.on('click', '#rooms > .room', (e) => {
             e.preventDefault();
 
             cache.messages.empty();
             cache.users.empty();
 
             socket.emit('rooms.join', $(e.target).data('room'));
+
+            setTimeout(function(){$("#profile p").addClass("animate");$("#profile").addClass("animate");}, 100);
+            setTimeout(function(){
+                $("#chat-messages").addClass("animate");
+                $('.ux, .uy').addClass('u1');
+                setTimeout(function(){$('.ux, .uy').addClass('u2');}, 100);
+                setTimeout(function(){$('.ux, .uy').addClass('u3');}, 200);
+            }, 150);
+
+            var name = $(e.target).data('room');
+            $("#profile p").html(name);
+
+            $('#friendslist').fadeOut();
+            $('#chatview').fadeIn(function () {
+                var divScrollBottom = document.getElementById("chat-messages");
+                divScrollBottom.scrollTop = divScrollBottom.scrollHeight;
+            });
+
+        })
+
+        $('#close').click(function(){
+
+            $("#chat-messages, #profile, #profile p").removeClass("animate");
+            $('.cx, .cy').removeClass("s1 s2 s3");
+
+            setTimeout(function(){
+                $('#chatview').fadeOut();
+                $('#friendslist').fadeIn();
+            }, 50);
         });
 
-        cache.document.on('submit', '#formMessage', e => {
+        cache.document.on('submit', '#sendmessage', e => {
             e.preventDefault();
+            console.log(cache.inputMessage.val())
 
             socket.emit('rooms.postMessage', cache.inputMessage.val());
             cache.inputMessage.val('');
         });
 
-    })(jQuery);
+    })(jQuery)
 </script>
 </body>
 </html>
