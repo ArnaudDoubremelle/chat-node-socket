@@ -132,7 +132,7 @@
                 cache.messages.append(`
                     <div class="message ${message.username === username ? 'right' : ''}">
                         <div class="bubble">
-                            <div>${message.username === username ? '' : message.username}</div>
+                            ${message.username === username ? '' : `<div>${message.username}</div>`}
                             ${message.message}
                             <div class="corner"></div>
                         </div>
