@@ -159,18 +159,14 @@
                     cache.isTyping.text(user.username + ' is typing...')
                 }
             } else {
-                for (var i = usersTyping.length - 1; i >= 0; i--) {
-                    if (usersTyping[i] === user.username) {
-                        usersTyping.splice(i, 1)
-                    }
-                }
-                console.log(usersTyping)
+                const index = usersTyping.indexOf(user.username)
+                usersTyping.splice(index, 1)
                 if (usersTyping.length === 0) {
-                    cache.isTyping.text('');
+                    cache.isTyping.text('')
                 } else if (usersTyping.length > 1) {
-                    cache.isTyping.text(usersTyping.toString() + ' are typing...' );
+                    cache.isTyping.text(usersTyping.join(', ') + ' are typing...')
                 } else {
-                    cache.isTyping.text(user.username + ' is typing...')
+                    cache.isTyping.text(usersTyping[0] + ' is typing...')
                 }
             }
         })
