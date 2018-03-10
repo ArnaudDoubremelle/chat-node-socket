@@ -17,6 +17,7 @@ const s = {
     DISCONNECT: "disconnect",
     CHAT_JOIN: "chat.join",
     USER_STATUS: "user.status",
+    USER_VALIDATION: "user.validation",
     ROOMS_LEAVE: "rooms.leave",
     ROOMS_GETLIST: "rooms.getList",
     ROOMS_JOIN: "rooms.join",
@@ -39,15 +40,21 @@ io.on(s.CONNECT, function (socket) {
     consoleLog('socket', 'connection', 'another user connected');
 
     socket.on(s.CHAT_JOIN, (username) => {
-        // 1. Save username
-        socket.username = username;
-        socket.userIp = requestIp.getClientIp(socket.request);
-        socket.status = "active";
+        client.hexists(`users:${username}`,'username', (err, res) => {
+            if (res) {
+                socket.emit(s.USER_VALIDATION);
+            } else {
+                // 1. Save username
+                socket.username = username;
+                socket.userIp = requestIp.getClientIp(socket.request);
+                socket.status = "active";
 
-        client.hmset(`users:${socket.username}`, ['username', socket.username, 'ip', socket.userIp]);
+                client.hmset(`users:${socket.username}`, ['username', socket.username, 'ip', socket.userIp]);
 
-        client.smembers("rooms", (err, res) => {
-            socket.emit(s.ROOMS_GETLIST, res)
+                client.smembers("rooms", (err, res) => {
+                    socket.emit(s.ROOMS_GETLIST, res);
+                });
+            }
         });
     });
 
