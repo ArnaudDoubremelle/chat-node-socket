@@ -101,8 +101,12 @@
         socket.on('user.validation', () => {
             username = prompt('Username already used. Please chose another one:');
 
-            if (typeof(Storage) !== undefined) {
-                localStorage.setItem('username', username);
+            while (username === undefined || username === null || username.trim() === '') {
+                username = prompt('Your username:');
+
+                if (typeof(Storage) !== undefined) {
+                    localStorage.setItem('username', username);
+                }
             }
 
             socket.emit('chat.join', username);
@@ -110,7 +114,7 @@
 
         socket.on('rooms.getList', (rooms) => {
             for (let room of rooms) {
-                cache.rooms.append(`<div class="room" data-room="${room}">${room}</div>`)
+                cache.rooms.append(`<div class="room" data-room="${room}">${room}</div>`);
             }
         });
 
@@ -138,18 +142,18 @@
                             <div class="corner"></div>
                         </div>
                     </div>
-                `)
+                `);
             }
 
             var divScrollBottom = document.getElementById('chat-messages');
 
-            divScrollBottom.scrollTop = divScrollBottom.scrollHeight
+            divScrollBottom.scrollTop = divScrollBottom.scrollHeight;
         });
 
         socket.on('rooms.isTyping', user => {
             if (user.isTyping === true) {
                 if (usersTyping.indexOf(user.username) > -1) {
-                    usersTyping.push(user.username)
+                    usersTyping.push(user.username);
                 }
 
                 if (usersTyping.length > 1) {
@@ -174,14 +178,14 @@
 
         socket.on('user.status', user => {
             if (user.status === 'active') {
-                $(`span[data-username="${user.username}"]`).removeClass("inactive");
+                $(`span[data-username="${user.username}"]`).removeClass('inactive');
             } else {
-                $(`span[data-username="${user.username}"]`).addClass("inactive");
+                $(`span[data-username="${user.username}"]`).addClass('inactive');
             }
         });
 
         socket.on('rooms.leave', username => {
-            $(`span[data-username="${username}"]`).remove()
+            $(`span[data-username="${username}"]`).remove();
         });
 
         cache.document.on('click', '#rooms > .room', (e) => {
@@ -195,16 +199,16 @@
             setTimeout(function () {
                 $('#profile p').addClass('animate');
                 $('#profile').addClass('animate');
-            }, 100)
+            }, 100);
             setTimeout(function () {
                 $('#chat-messages').addClass('animate');
                 $('.ux, .uy').addClass('u1');
                 setTimeout(function () {
                     $('.ux, .uy').addClass('u2');
-                }, 100)
+                }, 100);
                 setTimeout(function () {
                     $('.ux, .uy').addClass('u3');
-                }, 200)
+                }, 200);
             }, 150);
 
             var name = $(e.target).data('room');
@@ -213,8 +217,8 @@
             $('#friendslist').fadeOut();
             $('#chatview').fadeIn(function () {
                 var divScrollBottom = document.getElementById('chat-messages');
-                divScrollBottom.scrollTop = divScrollBottom.scrollHeight
-            })
+                divScrollBottom.scrollTop = divScrollBottom.scrollHeight;
+            });
 
         });
 
@@ -234,7 +238,7 @@
             setTimeout(() => {
                 $('#chatview').fadeOut();
                 $('#friendslist').fadeIn();
-            }, 50)
+            }, 50);
         });
 
         cache.document.on('click', '#status', (e) => {
@@ -283,7 +287,7 @@
             }
         });
 
-    })(jQuery)
+    })(jQuery);
 </script>
 </body>
 </html>
