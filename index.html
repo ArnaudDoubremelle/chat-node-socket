@@ -16,7 +16,7 @@
         <div id="header"></div>
 
         <div id="topmenu">
-            <span class="chats"></span> <span class="title">Online</span>
+            <span class="title">Rooms List</span>
         </div>
 
         <div id="rooms"></div>
@@ -41,6 +41,8 @@
     <div id="chatview" class="p1">
         <div id="profile">
 
+            <div id="status" data-status="active"></div>
+
             <div id="close">
                 <div class="uy"></div>
                 <div class="ux"></div>
@@ -53,6 +55,7 @@
         </div>
 
         <form id="sendmessage">
+            <div id="is-typing"></div>
             <input type="text" value="Send message..."/>
             <button type="submit" id="send"></button>
         </form>
@@ -71,7 +74,8 @@
             rooms: $('#rooms'),
             users: $('#users'),
             messages: $('#chat-messages'),
-            inputMessage: $('#sendmessage input')
+            inputMessage: $('#sendmessage input'),
+            isTyping: $('#is-typing')
         };
 
         const socket = io();
@@ -128,7 +132,8 @@
                 cache.messages.append(`
                     <div class="message ${message.username === username ? 'right' : ''}">
                         <div class="bubble">
-                            ${message.username === username ? 'Me, Myself and I' : message.username} : ${message.message}
+                            <div>${message.username === username ? '' : message.username}</div>
+                            ${message.message}
                             <div class="corner"></div>
                         </div>
                     </div>
@@ -139,16 +144,16 @@
             divScrollBottom.scrollTop = divScrollBottom.scrollHeight;
         });
 
-        socket.on('rooms.isTyping', data => {
-           if (data.isTyping === true) {
-               // data.username is typing
+        socket.on('rooms.isTyping', user => {
+           if (user.isTyping === true) {
+               cache.isTyping.text(user.username + ' is typing...')
            } else {
-               // effacer is typing
+               cache.isTyping.text('')
            }
         });
 
         socket.on('rooms.leave', username => {
-            console.log(username);
+            $(`span[data-username="${username}"]`).remove();
         });
 
         cache.document.on('click', '#rooms > .room', (e) => {
@@ -178,17 +183,29 @@
 
         });
 
-        $('#close').click(function(){
+        $('#close').click(() => {
             socket.emit('rooms.leave');
 
             $("#chat-messages, #profile, #profile p").removeClass("animate");
             $('.cx, .cy').removeClass("s1 s2 s3");
 
-            setTimeout(function(){
+            setTimeout(() => {
                 $('#chatview').fadeOut();
                 $('#friendslist').fadeIn();
             }, 50);
         });
+
+        cache.document.on('click', '#status', (e) => {
+            e.preventDefault();
+            if ($(e.target).data('status') === 'active') {
+                console.log("b")
+                $(e.target).addClass('inactive');
+                $(e.target).data('status', 'inactive');
+            } else {
+                $(e.target).removeClass('inactive');
+                $(e.target).data('status', 'active');
+            }
+        })
 
         cache.document.on('submit', '#sendmessage', e => {
             e.preventDefault();

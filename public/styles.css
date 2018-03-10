@@ -58,7 +58,8 @@ body {
     font-size: 15px;
     color: #019eae;
     background: none;
-    text-align: left;
+    text-align: center;
+    width: 100%;
 }
 #topmenu span.rooms{margin-bottom:-1px;}
 #topmenu span.chats{background-position:-95px 25px; cursor:pointer;}
@@ -230,6 +231,7 @@ body {
     padding: 0 58px 30px 0;
     margin-right: -19px;
     margin-left: 19px;
+    margin-bottom: 23px;
 }
 #chat-messages .message img{
     float: left;
@@ -246,16 +248,23 @@ body {
 .message .bubble{
     background:#f0f4f7;
     font-size:13px;
-    font-weight:600;
+    font-weight:100;
     padding:12px 13px;
     border-radius:5px 5px 5px 0px;
     color:#8495a3;
     position:relative;
     float:left;
 }
+.message .bubble div {
+    font-size:15px;
+    margin-bottom: 5px;
+    font-weight:600;
+}
 #chat-messages div.message.right .bubble{
     float:right;
     border-radius:5px 5px 0px 5px ;
+    background-color: #04aabf;
+    color: #fff;
 }
 .bubble .corner{
     background:url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/245657/bubble-corner.png") 0 0 no-repeat;
@@ -266,7 +275,7 @@ body {
     bottom:0;
 }
 div.message.right .corner{
-    background:url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/245657/bubble-cornerR.png") 0 0 no-repeat;
+    background:url("/static/img/corner.png") 0 0 no-repeat;
     left:auto;
     right:-5px;
 }
@@ -405,6 +414,26 @@ div.message.right .corner{
     transition: all 100ms ease-out;
 }
 #chatview, #sendmessage {
-    overflow:hidden;
     border-radius:6px;
+}
+#is-typing {
+    position: absolute;
+    top: -40px;
+    left: 40px;
+    font-size: 12px;
+    font-weight: 100;
+    color: #8495a3;
+}
+#status {
+    position: absolute;
+    cursor: pointer;
+    top: 10px;
+    left: 10px;
+    width: 40px;
+    height: 40px;
+    background-color: #008000;
+    border-radius: 50%;
+}
+#status.inactive {
+    background-color: red;
 }
