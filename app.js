@@ -22,6 +22,7 @@ const s = {
     ROOMS_GETUSERS: "rooms.getUsers",
     ROOMS_NEWUSER: "rooms.newUser",
     ROOMS_GETMESSAGES: "rooms.getMessages",
+    ROOMS_ISTYPING: "rooms.isTyping",
     ROOMS_POSTMESSAGE: "rooms.postMessage",
 };
 
@@ -86,6 +87,10 @@ io.on(s.CONNECT, function (socket) {
                 });
             });
         }
+    });
+
+    socket.on(s.ROOMS_ISTYPING, (username) => {
+        socket.to(socket.room).emit(s.ROOMS_ISTYPING, username);
     });
 
     socket.on(s.ROOMS_POSTMESSAGE, (message) => {

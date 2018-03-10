@@ -60,7 +60,6 @@
     </div>
 </div>
 
-
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
@@ -73,7 +72,7 @@
             users: $('#users'),
             messages: $('#chat-messages'),
             inputMessage: $('#sendmessage input')
-        }
+        };
 
         const socket = io();
         var username;
@@ -90,35 +89,35 @@
         });
 
         if (typeof(Storage) !== undefined) {
-            username = localStorage.getItem('username')
+            username = localStorage.getItem('username');
             console.log(`Username from localStorage is ${username}`)
         }
 
         while (username === undefined || username === null || username.trim() === '') {
-            username = prompt('Your username:')
+            username = prompt('Your username:');
 
             if (typeof(Storage) !== undefined) {
                 localStorage.setItem('username', username)
             }
         }
 
-        socket.emit('chat.join', username)
+        socket.emit('chat.join', username);
 
         socket.on('rooms.getList', (rooms) => {
             for (let room of rooms) {
-                cache.rooms.append(`<div class="room" data-room="${room}">${room}</div>`)
+                cache.rooms.append(`<div class="room" data-room="${room}">${room}</div>`);
             }
         });
 
         socket.on('rooms.getUsers', (user) => {
             if (user.username !== username) {
-                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`)
+                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`);
             }
         });
 
         socket.on('rooms.newUser', (user) => {
             if (user.username !== username) {
-                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`)
+                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`);
             }
         });
 
@@ -138,6 +137,10 @@
 
             var divScrollBottom = document.getElementById("chat-messages");
             divScrollBottom.scrollTop = divScrollBottom.scrollHeight;
+        });
+
+        socket.on('rooms.isTyping', username => {
+           console.log(username);
         });
 
         socket.on('rooms.leave', (username) => {
@@ -169,7 +172,7 @@
                 divScrollBottom.scrollTop = divScrollBottom.scrollHeight;
             });
 
-        })
+        });
 
         $('#close').click(function(){
 
@@ -188,6 +191,20 @@
 
             socket.emit('rooms.postMessage', cache.inputMessage.val());
             cache.inputMessage.val('');
+        });
+
+        cache.document.on('submit', '#sendmessage', e => {
+            e.preventDefault();
+            console.log(cache.inputMessage.val())
+
+            socket.emit('rooms.postMessage', cache.inputMessage.val());
+            cache.inputMessage.val('');
+        });
+
+        cache.inputMessage.keyup(() => {
+            if (cache.inputMessage.val() !== "") {
+                socket.emit('rooms.isTyping', username);
+            }
         });
 
     })(jQuery)
