@@ -74,6 +74,7 @@
             rooms: $('#rooms'),
             users: $('#users'),
             messages: $('#chat-messages'),
+            status: $('#status'),
             inputMessage: $('#sendmessage input'),
             isTyping: $('#is-typing')
         };
@@ -115,13 +116,13 @@
 
         socket.on('rooms.getUsers', (user) => {
             if (user.username !== username) {
-                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`);
+                cache.users.append(`<span data-username="${user.username}">${user.username}</span>`);
             }
         });
 
         socket.on('rooms.newUser', (user) => {
             if (user.username !== username) {
-                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`);
+                cache.users.append(`<span data-username="${user.username}">${user.username}</span>`);
             }
         });
 
@@ -150,6 +151,14 @@
            } else {
                cache.isTyping.text('')
            }
+        });
+
+        socket.on('user.status', user => {
+            if (user.status === 'active') {
+                $(`span[data-username="${user.username}"]`).removeClass("inactive")
+            } else {
+                $(`span[data-username="${user.username}"]`).addClass("inactive")
+            }
         });
 
         socket.on('rooms.leave', username => {
@@ -185,6 +194,10 @@
 
         cache.document.on('click', '#close', (e) => {
             e.preventDefault();
+
+            cache.status.removeClass('inactive');
+            cache.status.data('status', 'active');
+
             socket.emit('rooms.leave');
 
             $("#chat-messages, #profile, #profile p").removeClass("animate");
@@ -198,6 +211,7 @@
 
         cache.document.on('click', '#status', (e) => {
             e.preventDefault();
+
             if ($(e.target).data('status') === 'active') {
                 $(e.target).addClass('inactive');
                 $(e.target).data('status', 'inactive');
@@ -205,6 +219,8 @@
                 $(e.target).removeClass('inactive');
                 $(e.target).data('status', 'active');
             }
+
+            socket.emit('user.status', $(e.target).data('status'));
         });
 
         cache.document.on('submit', '#sendmessage', e => {
