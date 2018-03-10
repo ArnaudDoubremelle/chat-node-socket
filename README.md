@@ -13,6 +13,11 @@ Launch nodejs
 $ yarn start
 ```
 
+Launch redis-commander
+```bash
+$ redis-commander
+```
+
 Redis
 ```bash
 $ SADD rooms "room name"
