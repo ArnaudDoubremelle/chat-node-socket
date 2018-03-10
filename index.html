@@ -183,7 +183,8 @@
 
         });
 
-        $('#close').click(() => {
+        cache.document.on('click', '#close', (e) => {
+            e.preventDefault();
             socket.emit('rooms.leave');
 
             $("#chat-messages, #profile, #profile p").removeClass("animate");
@@ -198,14 +199,13 @@
         cache.document.on('click', '#status', (e) => {
             e.preventDefault();
             if ($(e.target).data('status') === 'active') {
-                console.log("b")
                 $(e.target).addClass('inactive');
                 $(e.target).data('status', 'inactive');
             } else {
                 $(e.target).removeClass('inactive');
                 $(e.target).data('status', 'active');
             }
-        })
+        });
 
         cache.document.on('submit', '#sendmessage', e => {
             e.preventDefault();
