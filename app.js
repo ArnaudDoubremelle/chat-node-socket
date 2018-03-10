@@ -89,8 +89,8 @@ io.on(s.CONNECT, function (socket) {
         }
     });
 
-    socket.on(s.ROOMS_ISTYPING, (username) => {
-        socket.to(socket.room).emit(s.ROOMS_ISTYPING, username);
+    socket.on(s.ROOMS_ISTYPING, (data) => {
+        socket.to(socket.room).emit(s.ROOMS_ISTYPING, data);
     });
 
     socket.on(s.ROOMS_POSTMESSAGE, (message) => {

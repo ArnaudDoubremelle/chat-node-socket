@@ -139,8 +139,12 @@
             divScrollBottom.scrollTop = divScrollBottom.scrollHeight;
         });
 
-        socket.on('rooms.isTyping', username => {
-           console.log(username);
+        socket.on('rooms.isTyping', data => {
+           if (data.isTyping === true) {
+               // data.username is typing
+           } else {
+               // effacer is typing
+           }
         });
 
         socket.on('rooms.leave', (username) => {
@@ -193,18 +197,14 @@
             cache.inputMessage.val('');
         });
 
-        cache.document.on('submit', '#sendmessage', e => {
-            e.preventDefault();
-            console.log(cache.inputMessage.val())
-
-            socket.emit('rooms.postMessage', cache.inputMessage.val());
-            cache.inputMessage.val('');
-        });
-
         cache.inputMessage.keyup(() => {
-            if (cache.inputMessage.val() !== "") {
-                socket.emit('rooms.isTyping', username);
+            let isTyping = true;
+
+            if (cache.inputMessage.val() === "") {
+                isTyping = false;
             }
+
+            socket.emit('rooms.isTyping', {'username': username, 'isTyping': isTyping});
         });
 
     })(jQuery)
