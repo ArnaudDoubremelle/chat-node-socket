@@ -117,7 +117,7 @@
 
         socket.on('rooms.getUsers', (user) => {
             if (user.username !== username) {
-                cache.users.append(`<span data-username="${user.username}">${user.username}</span>`);
+                cache.users.append(`<span class="${user.status}" data-username="${user.username}">${user.username}</span>`);
             }
         })
 
@@ -249,17 +249,18 @@
         });
 
         cache.document.on('submit', '#sendmessage', e => {
-            e.preventDefault()
-
-            socket.emit('rooms.postMessage', cache.inputMessage.val())
-            cache.inputMessage.val('')
+            e.preventDefault();
+            if (cache.inputMessage.val() !== '') {
+                socket.emit('rooms.postMessage', cache.inputMessage.val());
+                cache.inputMessage.val('');
+            }
         })
 
         cache.inputMessage.keyup(() => {
-            let isTyping = true
+            let isTyping = true;
 
             if (cache.inputMessage.val() === '') {
-                isTyping = false
+                isTyping = false;
             }
 
             socket.emit('rooms.isTyping', {'username': username, 'isTyping': isTyping})

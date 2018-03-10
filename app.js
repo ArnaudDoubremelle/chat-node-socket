@@ -104,6 +104,8 @@ io.on(s.CONNECT, function (socket) {
     });
 
     socket.on(s.USER_STATUS, status => {
+        socket.status = status;
+        client.hset(`rooms:${socket.room}:users:${socket.username}`, 'status', socket.status);
         socket.to(socket.room).emit(s.USER_STATUS, {'username': socket.username, 'status': status});
     });
 
