@@ -41,14 +41,9 @@ io.on(s.CONNECT, function (socket) {
         // 1. Save username
         socket.username = username;
         socket.userIp = requestIp.getClientIp(socket.request);
-        socket.room = "General";
         socket.status = "active";
 
-        socket.join(socket.room);
-
         client.hmset(`users:${socket.username}`, ['username', socket.username, 'ip', socket.userIp]);
-
-        client.hmset(`rooms:${socket.room}:users:${socket.username}`, ['username', socket.username, 'status', socket.status]);
 
         client.smembers("rooms", (err, res) => {
             socket.emit(s.ROOMS_GETLIST, res)
@@ -59,31 +54,23 @@ io.on(s.CONNECT, function (socket) {
         if (room !== socket.room) {
             socket.status = "active";
 
-            socket.leave(socket.room, () => {
-                consoleLog('rooms', 'join', `User ${socket.username} leave room "${socket.room}" and is joining room "${room}"`);
+            socket.join(room, () => {
+                socket.room = room;
 
-                io.in(socket.room).emit(s.ROOMS_LEAVE, socket.username);
+                client.hmset(`rooms:${socket.room}:users:${socket.username}`, ['username', socket.username, 'status', socket.status]);
 
-                client.del(`rooms:${socket.room}:users:${socket.username}`);
+                socket.to(socket.room).emit(s.ROOMS_NEWUSER, {'username': socket.username, 'status': socket.status});
 
-                socket.join(room, () => {
-                    socket.room = room;
+                client.lrange(`rooms:${socket.room}:messages`, 0, 20, (err, res) => {
+                    socket.emit(s.ROOMS_GETMESSAGES, res.reverse().map(json => JSON.parse(json)));
+                });
 
-                    client.hmset(`rooms:${socket.room}:users:${socket.username}`, ['username', socket.username, 'status', socket.status]);
-
-                    socket.to(socket.room).emit(s.ROOMS_NEWUSER, {'username': socket.username, 'status': socket.status});
-
-                    client.lrange(`rooms:${socket.room}:messages`, 0, 20, (err, res) => {
-                        socket.emit(s.ROOMS_GETMESSAGES, res.reverse().map(json => JSON.parse(json)));
-                    });
-
-                    client.keys(`rooms:${socket.room}:users:*`, (err, userKeys) => {
-                        for (let userKey of userKeys) {
-                            client.hgetall(userKey, (err, user) => {
-                                socket.emit(s.ROOMS_GETUSERS, user);
-                            });
-                        }
-                    });
+                client.keys(`rooms:${socket.room}:users:*`, (err, userKeys) => {
+                    for (let userKey of userKeys) {
+                        client.hgetall(userKey, (err, user) => {
+                            socket.emit(s.ROOMS_GETUSERS, user);
+                        });
+                    }
                 });
             });
         }
@@ -102,12 +89,22 @@ io.on(s.CONNECT, function (socket) {
         io.in(socket.room).emit(s.ROOMS_GETMESSAGES, {'username': socket.username, 'message': message});
     });
 
-    socket.on(s.DISCONNECT, function () {
-        console.log(socket.username)
+    socket.on(s.ROOMS_LEAVE, () => {
+        console.log("user left the room");
+        socket.leave(socket.room, () => {
+            consoleLog('rooms', 'join', `User ${socket.username} leave room "${socket.room}"`);
+
+            socket.to(socket.room).emit(s.ROOMS_LEAVE, socket.username);
+
+            client.del(`rooms:${socket.room}:users:${socket.username}`);
+        });
+    });
+
+    socket.on(s.DISCONNECT, () => {
         console.log('user disconnected');
 
         if (socket.username !== undefined) {
-            io.in(socket.room).emit(s.ROOMS_LEAVE, socket.username);
+            socket.to(socket.room).emit(s.ROOMS_LEAVE, socket.username);
             client.del(`rooms:${socket.room}:users:${socket.username}`);
             client.del(`users:${socket.username}`);
         }

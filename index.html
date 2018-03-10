@@ -147,8 +147,8 @@
            }
         });
 
-        socket.on('rooms.leave', (username) => {
-            $(`div[data-username="${username}"]`).remove();
+        socket.on('rooms.leave', username => {
+            console.log(username);
         });
 
         cache.document.on('click', '#rooms > .room', (e) => {
@@ -179,6 +179,7 @@
         });
 
         $('#close').click(function(){
+            socket.emit('rooms.leave');
 
             $("#chat-messages, #profile, #profile p").removeClass("animate");
             $('.cx, .cy').removeClass("s1 s2 s3");
