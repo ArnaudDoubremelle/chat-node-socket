@@ -198,6 +198,7 @@ body {
     margin-top:0;
 }
 #users{
+    overflow-y: scroll;
     position: absolute;
     width: 100%;
     left: 0;
@@ -210,6 +211,7 @@ body {
     font-size:12px;
     text-align:center;
     display:block;
+    border-bottom: 1px solid #597a96;
 }
 #users span {
     margin: 0 10px;
